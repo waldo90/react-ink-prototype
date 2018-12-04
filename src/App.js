@@ -5,7 +5,7 @@ import logo from './logo.svg';
 import './App.css';
 
 import storyContent from './story';
-console.log(storyContent)
+// console.log(storyContent)
 let Story = require('inkjs').Story;
 const ink = new Story(storyContent);
 
@@ -32,16 +32,25 @@ class GameStore extends EventEmitter {
         super()
         this._story = story
         this.dispatcherIndex = dispatcher.register( this.dispatch.bind(this) )
+        this._tags = []
+        this._paras = []
     }
     get story() {
-        let paras = []
+        this._paras = []
+        this._tags = []
         while ( this._story.canContinue ){
-            paras.push(this._story.Continue())
+            this._paras.push(this._story.Continue())
+            console.log('tags: ', this._story.currentTags)
+            this._tags = [...this._tags, ...this._story.currentTags]
         }
-        return paras
+        return this._paras
     }
     get choices() {
         return this._story.currentChoices
+    }
+
+    get tags() {
+        return this._tags //this._story.currentTags
     }
 
     dispatch(payload) {
@@ -64,7 +73,8 @@ const gameStore = new GameStore(ink, gameDispatcher)
 function getGameState() {
     return {
         story: gameStore.story,
-        choices: gameStore.choices
+        choices: gameStore.choices,
+        tags: gameStore.tags
     }
 }
 class App extends Component {
@@ -78,7 +88,7 @@ class App extends Component {
     }
     render() {
         const {story} = this.state
-        const {choices} = this.state
+        const {choices, tags} = this.state
         return (
             <div className="App">
             <header className="App-header">
@@ -97,6 +107,13 @@ class App extends Component {
                 </button>
 
             )}
+
+            <ul>
+            {tags.map((tag, i) =>
+                <li>{ tag }</li>
+            )}
+            </ul>
+
             </header>
             </div>
         );
