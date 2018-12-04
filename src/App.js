@@ -32,25 +32,18 @@ class GameStore extends EventEmitter {
         super()
         this._story = story
         this.dispatcherIndex = dispatcher.register( this.dispatch.bind(this) )
-        this._tags = []
         this._paras = []
     }
     get story() {
         this._paras = []
-        this._tags = []
         while ( this._story.canContinue ){
-            this._paras.push(this._story.Continue())
-            console.log('tags: ', this._story.currentTags)
-            this._tags = [...this._tags, ...this._story.currentTags]
+            this._paras.push({'type': 'para', 'value': this._story.Continue()})
+            this._paras.push({'type': 'tags', 'value': this._story.currentTags})
         }
         return this._paras
     }
     get choices() {
         return this._story.currentChoices
-    }
-
-    get tags() {
-        return this._tags //this._story.currentTags
     }
 
     dispatch(payload) {
@@ -61,6 +54,8 @@ class GameStore extends EventEmitter {
                 this._story.ChooseChoiceIndex(index)
                 this.emit("CHOICEMADE", payload.action)
                 return true
+            default:
+                return false
         }
 
     }
@@ -74,7 +69,6 @@ function getGameState() {
     return {
         story: gameStore.story,
         choices: gameStore.choices,
-        tags: gameStore.tags
     }
 }
 class App extends Component {
@@ -87,14 +81,19 @@ class App extends Component {
         gameStore.addListener('CHOICEMADE', () => this.handleChoiceMade(), this)
     }
     render() {
-        const {story} = this.state
-        const {choices, tags} = this.state
+        const {story, choices} = this.state
         return (
             <div className="App">
             <header className="App-header">
             <img src={logo} className="App-logo" alt="logo" />
-            { story.map((text, i) =>
-                <p key={i}>{ text }</p>
+            {story.map((obj, i) => {
+                    switch(obj.type) {
+                        case "para": return <p key={i}>{ obj.value }</p>
+                        case "tags": return obj.value.map((tag, i) =><strong key={i}>{tag}</strong>)
+                        default:
+                    }
+                    return ''
+                }
             )}
 
             {choices.map((choice, i) =>
@@ -107,12 +106,6 @@ class App extends Component {
                 </button>
 
             )}
-
-            <ul>
-            {tags.map((tag, i) =>
-                <li>{ tag }</li>
-            )}
-            </ul>
 
             </header>
             </div>
