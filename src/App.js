@@ -31,9 +31,19 @@ class GameStore extends EventEmitter {
     constructor(story, dispatcher) {
         super()
         this._story = story
-        this.dispatcherIndex = dispatcher.register( this.dispatch.bind(this) )
         this._paras = []
+        this._location = ''
+        this._score = 0
+        this._story.ObserveVariable('location', this.watchHandler.bind(this))
+        this._story.ObserveVariable('score', this.watchHandler.bind(this))
+        this.dispatcherIndex = dispatcher.register( this.dispatch.bind(this) )
     }
+
+    watchHandler(name, value) {
+        // console.log(`watch: ${name} = ${value.toString()}`)
+        this['_' + name] = value.toString()
+    }
+
     get story() {
         this._paras = []
         while ( this._story.canContinue ){
@@ -44,6 +54,17 @@ class GameStore extends EventEmitter {
     }
     get choices() {
         return this._story.currentChoices
+    }
+
+    get location() {
+        return this._location
+    }
+    get max_score() {
+        return this._story.variablesState['max_possible_score']
+    }
+
+    get score() {
+        return this._score
     }
 
     dispatch(payload) {
@@ -69,6 +90,9 @@ function getGameState() {
     return {
         story: gameStore.story,
         choices: gameStore.choices,
+        location: gameStore.location,
+        score: gameStore.score,
+        max_score : gameStore.max_score
     }
 }
 class App extends Component {
@@ -81,11 +105,13 @@ class App extends Component {
         gameStore.addListener('CHOICEMADE', () => this.handleChoiceMade(), this)
     }
     render() {
-        const {story, choices} = this.state
+        const {story, choices, location, score, max_score} = this.state
         return (
             <div className="App">
             <header className="App-header">
             <img src={logo} className="App-logo" alt="logo" />
+            <h1>{ location }</h1>
+            <strong>Score: {score}/{max_score}</strong>
             {story.map((obj, i) => {
                     switch(obj.type) {
                         case "para": return <p key={i}>{ obj.value }</p>
@@ -116,7 +142,7 @@ class App extends Component {
         this.setState(getGameState())
     }
     handleChoice(choice) {
-        //console.log(choice)
+        // console.log(choice)
         gameActions.makeChoice(choice.index)
     }
 }
