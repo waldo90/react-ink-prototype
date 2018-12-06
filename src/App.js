@@ -100,6 +100,7 @@ function getGameState() {
     }
 }
 
+// UI //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function Location(props) {
     if (props.location) {
         return <strong className="location">In the { props.location }</strong>
