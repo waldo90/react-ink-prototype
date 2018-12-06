@@ -1,4 +1,14 @@
+# Ink Storytelling in React
+
+A prototype exploring what an [Inkjs](https://github.com/y-lohse/inkjs) web app might look like when built with
+React.
+
+[Inkle Studio's Inklecate](https://github.com/inkle/ink) or [Inky](https://github.com/inkle/inky) are required
+to re-build ```src/story.json``` from ```story.ink```.
+
+---
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
 
 ## Available Scripts
 
