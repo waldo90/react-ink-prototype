@@ -4,7 +4,6 @@ import { Dispatcher } from 'flux';
 import logo from './logo.svg';
 import './App.css';
 
-//import storyContent from './story';
 import storyContent from './story.json'
 console.log(storyContent)
 let Story = require('inkjs').Story;
@@ -35,8 +34,10 @@ class GameStore extends EventEmitter {
         this._chunk = []
         this._location = ''
         this._score = 0
+        this._inventory = []
         this._story.ObserveVariable('location', this.watchHandler.bind(this))
         this._story.ObserveVariable('score', this.watchHandler.bind(this))
+        this._story.ObserveVariable('inventory', this.watchHandler.bind(this))
         this.dispatcherIndex = dispatcher.register( this.dispatch.bind(this) )
     }
 
@@ -56,14 +57,15 @@ class GameStore extends EventEmitter {
     get choices() {
         return this._story.currentChoices
     }
-
+    get inventory() {
+        return this._inventory
+    }
     get location() {
         return this._location
     }
     get max_score() {
         return this._story.variablesState['max_possible_score']
     }
-
     get score() {
         return this._score
     }
@@ -93,9 +95,62 @@ function getGameState() {
         choices: gameStore.choices,
         location: gameStore.location,
         score: gameStore.score,
-        max_score : gameStore.max_score
+        max_score : gameStore.max_score,
+        inventory: gameStore.inventory
     }
 }
+
+function Location(props) {
+    if (props.location) {
+        return <strong className="location">In the { props.location }</strong>
+    }
+    return null
+}
+
+function Chunk(props) {
+    return props.story.map((obj, i) => {
+        switch(obj.type) {
+            case "para": return <Text key={i} text={obj.value} />
+            case "tags": return <Tags tags={obj.value} />
+            default:
+        }
+        return ''
+    })
+}
+function Text(props) {
+    return <p key={props.key}>{ props.text }</p>
+}
+
+function Tags(props) {
+    // Printing tags into the flow of the story for debugging / demo purposes.
+    // In practice they would likely trigger game events
+    return props.tags.map((tag, i) =><strong key={i}>{tag}</strong>)
+}
+
+function Score(props) {
+    return <strong className="score">Score: {props.score}/{props.max}</strong>
+}
+
+function Inventory(props) {
+    if (!props.items) return null
+    return  <div className="inventory">
+                You are carrying: { props.items || 'nothing'}
+            </div>
+}
+
+function Choices(props) {
+    function handleChoice(choice) {
+        gameActions.makeChoice(choice.index)
+    }
+    return <div className="choices">
+            {props.choices.map((choice, i) =>
+                <button className="choice" key={i} onClick={() => handleChoice(choice)}>
+                    { choice.text }
+                </button>
+            )}
+           </div>
+}
+
 class App extends Component {
     constructor(props) {
         super(props)
@@ -106,45 +161,23 @@ class App extends Component {
         gameStore.addListener('CHOICEMADE', () => this.handleChoiceMade(), this)
     }
     render() {
-        const {story, choices, location, score, max_score} = this.state
+        const {story, choices, location, score, max_score, inventory} = this.state
         return (
             <div className="App">
-            <header className="App-header">
-            <img src={logo} className="App-logo" alt="logo" />
-            <h1>{ location }</h1>
-            <strong>Score: {score}/{max_score}</strong>
-            {story.map((obj, i) => {
-                    switch(obj.type) {
-                        case "para": return <p key={i}>{ obj.value }</p>
-                        case "tags": return obj.value.map((tag, i) =><strong key={i}>{tag}</strong>)
-                        default:
-                    }
-                    return ''
-                }
-            )}
-
-            {choices.map((choice, i) =>
-                <button
-                className="choice"
-                key={i}
-                onClick={() => this.handleChoice(choice)}
-                >
-                { choice.text }
-                </button>
-
-            )}
-
-            </header>
+                <header className="App-header">
+                <img src={logo} className="App-logo" alt="logo"/>
+                </header>
+                <Location location={location}/>
+                <Score score={score} max={max_score}/>
+                <Chunk story={story}/>
+                <Choices choices={choices}/>
+                <Inventory items={inventory}/>
             </div>
         );
     }
 
     handleChoiceMade() {
         this.setState(getGameState())
-    }
-    handleChoice(choice) {
-        // console.log(choice)
-        gameActions.makeChoice(choice.index)
     }
 }
 
