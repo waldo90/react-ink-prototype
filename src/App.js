@@ -4,8 +4,9 @@ import { Dispatcher } from 'flux';
 import logo from './logo.svg';
 import './App.css';
 
-import storyContent from './story';
-// console.log(storyContent)
+//import storyContent from './story';
+import storyContent from './story.json'
+console.log(storyContent)
 let Story = require('inkjs').Story;
 const ink = new Story(storyContent);
 
@@ -31,7 +32,7 @@ class GameStore extends EventEmitter {
     constructor(story, dispatcher) {
         super()
         this._story = story
-        this._paras = []
+        this._chunk = []
         this._location = ''
         this._score = 0
         this._story.ObserveVariable('location', this.watchHandler.bind(this))
@@ -45,12 +46,12 @@ class GameStore extends EventEmitter {
     }
 
     get story() {
-        this._paras = []
+        this._chunk = []
         while ( this._story.canContinue ){
-            this._paras.push({'type': 'para', 'value': this._story.Continue()})
-            this._paras.push({'type': 'tags', 'value': this._story.currentTags})
+            this._chunk.push({'type': 'para', 'value': this._story.Continue()})
+            this._chunk.push({'type': 'tags', 'value': this._story.currentTags})
         }
-        return this._paras
+        return this._chunk
     }
     get choices() {
         return this._story.currentChoices
